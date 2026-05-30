@@ -3,7 +3,7 @@
 import subprocess
 import sys
 import webbrowser
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -169,18 +169,24 @@ def _pairs_signals(close: pd.DataFrame, params: PairsParameters):
 # ---------------------------------------------------------------------------
 
 def _print_summary(portfolio, strategy_name: str, start: str, end: str) -> None:
-    stats = portfolio.stats(group_by=True)
+    stats = portfolio.stats()
+    total_return = stats.get("Total Return [%]", float("nan"))
+    years = (date.fromisoformat(end) - date.fromisoformat(start)).days / 365.25
+    if not np.isnan(total_return) and years > 0:
+        cagr = ((1 + total_return / 100) ** (1 / years) - 1) * 100
+    else:
+        cagr = float("nan")
     print()
     print("=" * 60)
     print(f"  pacabot Backtest — {strategy_name}")
     print(f"  Period: {start} to {end}")
     print("=" * 60)
     print(f"  Sharpe Ratio   : {stats.get('Sharpe Ratio', float('nan')):.3f}")
-    print(f"  CAGR           : {stats.get('Annualized Return [%]', float('nan')):.2f}%")
+    print(f"  CAGR           : {cagr:.2f}%")
     print(f"  Max Drawdown   : {stats.get('Max Drawdown [%]', float('nan')):.2f}%")
     print(f"  Win Rate       : {stats.get('Win Rate [%]', float('nan')):.2f}%")
     print(f"  Total Trades   : {int(stats.get('Total Trades', 0))}")
-    print(f"  Total Return   : {stats.get('Total Return [%]', float('nan')):.2f}%")
+    print(f"  Total Return   : {total_return:.2f}%")
     print("=" * 60)
     print()
 
@@ -193,7 +199,7 @@ def _save_outputs(portfolio, strategy_name: str, start_str: str, end_str: str) -
     # HTML chart
     html_path = _RESULTS_DIR / f"{base_name}.html"
     try:
-        fig = portfolio.plot(group_by=True)
+        fig = portfolio.plot()
         fig.write_html(str(html_path))
     except Exception as e:
         get_logger().warning("Could not generate HTML chart: %s", e)
