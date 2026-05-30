@@ -1,0 +1,42 @@
+# pacabot — Cross-Sectional Momentum example config
+# Copy this file and adjust values before running.
+# API keys are set via environment variables (not in this file):
+#   export ALPACA_API_KEY="..."
+#   export ALPACA_SECRET_KEY="..."
+
+[account]
+name = "paper1"
+paper = true   # set to false for a live account
+
+[strategy]
+name = "cross-sectional-momentum"
+universe = "sp500"          # sp500 | sp100 | nasdaq100 | russell1000 | russell2000 | dow30 | custom
+long-only = true            # false = also short the bottom-N ranked assets
+order-type = "market"       # market | limit
+
+# For custom universe, add tickers list:
+# tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
+
+[strategy.parameters]
+lookback-period = 252       # days of trailing return used to rank assets
+top-n = 10                  # number of top-ranked assets to hold (and bottom-N to short)
+rebalance-frequency = "monthly"   # weekly | monthly
+
+[execution]
+trading-start = "09:45"     # HH:MM Eastern; no orders before this time. false to disable.
+trading-end = "15:45"       # HH:MM Eastern; no orders after this time. false to disable.
+
+[risk]
+margin-utilization-cap = 0.70       # never use more than this fraction of buying power
+margin-warning-threshold = 0.80     # stop opening new positions above this utilization
+margin-critical-threshold = 0.90    # flatten all positions + halt above this utilization
+
+stop-loss = 0.05                    # exit if position moves 5% against entry; false for none
+max-position-size = 0.10            # max position as fraction of account equity (10%)
+max-position-size-usd = 5000.00     # max position in dollars; more restrictive limit applied
+max-positions = 10                  # max simultaneous open positions; 0 for uncapped
+daily-loss-limit = 0.02             # halt if account is down 2% on the day; false to disable
+
+[logging]
+log-level = "info"          # critical | error | warning | info | debug
+log-file = "pacabot.log"

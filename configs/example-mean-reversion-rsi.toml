@@ -1,0 +1,38 @@
+# pacabot — Mean Reversion (RSI) example config
+
+[account]
+name = "paper1"
+paper = true
+
+[strategy]
+name = "mean-reversion"
+universe = "sp100"          # sp500 | sp100 | nasdaq100 | russell1000 | russell2000 | dow30 | custom
+long-only = true
+order-type = "market"       # market | limit
+
+[strategy.parameters]
+indicator = "rsi"
+max-holding-days = 10       # loss-only time stop: exit after N days only if at a loss; false to disable
+
+[strategy.parameters.rsi]
+period = 14                 # RSI lookback window (days)
+entry-threshold = 30        # buy when RSI falls below this (oversold); valid: 1–49
+exit-threshold = 50         # sell when RSI rises above this (normalized); valid: > entry, ≤ 99
+
+[execution]
+trading-start = "09:45"
+trading-end = "15:45"
+
+[risk]
+margin-utilization-cap = 0.70
+margin-warning-threshold = 0.80
+margin-critical-threshold = 0.90
+stop-loss = 0.05
+max-position-size = 0.05
+max-position-size-usd = 3000.00
+max-positions = 15
+daily-loss-limit = 0.02
+
+[logging]
+log-level = "info"
+log-file = "pacabot.log"

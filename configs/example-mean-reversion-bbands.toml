@@ -1,0 +1,38 @@
+# pacabot — Mean Reversion (Bollinger Bands) example config
+
+[account]
+name = "paper1"
+paper = true
+
+[strategy]
+name = "mean-reversion"
+universe = "sp500"
+long-only = true
+order-type = "market"
+
+[strategy.parameters]
+indicator = "bollinger-bands"
+max-holding-days = 10
+
+[strategy.parameters.bollinger-bands]
+period = 20                 # rolling window for mean and standard deviation (days)
+std-dev = 2.0               # band width in standard deviations; positive float
+exit-band = "middle"        # middle = exit at rolling mean (conventional); upper = exit at upper band
+
+[execution]
+trading-start = "09:45"
+trading-end = "15:45"
+
+[risk]
+margin-utilization-cap = 0.70
+margin-warning-threshold = 0.80
+margin-critical-threshold = 0.90
+stop-loss = 0.05
+max-position-size = 0.05
+max-position-size-usd = 3000.00
+max-positions = 15
+daily-loss-limit = 0.02
+
+[logging]
+log-level = "info"
+log-file = "pacabot.log"

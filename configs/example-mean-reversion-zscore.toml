@@ -1,0 +1,38 @@
+# pacabot — Mean Reversion (Z-Score) example config
+
+[account]
+name = "paper1"
+paper = true
+
+[strategy]
+name = "mean-reversion"
+universe = "sp500"
+long-only = true
+order-type = "market"
+
+[strategy.parameters]
+indicator = "zscore"
+max-holding-days = 10
+
+[strategy.parameters.zscore]
+period = 20                 # rolling window for mean and std dev (days)
+entry-threshold = -2.0      # buy when z-score falls below this; must be negative
+exit-threshold = 0.0        # sell when z-score rises above this; any float > entry-threshold
+
+[execution]
+trading-start = "09:45"
+trading-end = "15:45"
+
+[risk]
+margin-utilization-cap = 0.70
+margin-warning-threshold = 0.80
+margin-critical-threshold = 0.90
+stop-loss = 0.05
+max-position-size = 0.05
+max-position-size-usd = 3000.00
+max-positions = 15
+daily-loss-limit = 0.02
+
+[logging]
+log-level = "info"
+log-file = "pacabot.log"

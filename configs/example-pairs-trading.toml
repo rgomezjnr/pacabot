@@ -1,0 +1,47 @@
+# pacabot — Pairs Trading example config
+# Pairs must be user-researched and explicitly defined.
+# Each pair should be two historically correlated, cointegrated tickers.
+
+[account]
+name = "paper1"
+paper = true
+
+[strategy]
+name = "pairs-trading"
+universe = "custom"         # always "custom" for pairs trading
+order-type = "market"       # market | limit
+# long-only is not set — pairs trading is always long/short
+
+[strategy.parameters]
+lookback-period = 60        # rolling window for spread mean, std dev, and OLS hedge ratio (days)
+entry-zscore = 2.0          # enter when spread z-score magnitude exceeds this; positive float
+exit-zscore = 0.5           # exit when spread z-score reverts within this of zero; < entry-zscore
+stop-loss-zscore = 3.0      # cut losses if spread widens beyond this; > entry-zscore
+recalculate-frequency = "monthly"  # weekly | monthly
+
+# Define pairs as a list of [tickerA, tickerB] arrays.
+# Research cointegration before adding pairs.
+# Examples of historically correlated pairs (verify before trading):
+pairs = [
+    ["KO",  "PEP"],   # Consumer staples: Coca-Cola / PepsiCo
+    ["XOM", "CVX"],   # Energy: ExxonMobil / Chevron
+    ["JPM", "BAC"],   # Financials: JPMorgan / Bank of America
+]
+
+[execution]
+trading-start = "09:45"
+trading-end = "15:45"
+
+[risk]
+margin-utilization-cap = 0.60       # lower cap recommended for long/short strategies
+margin-warning-threshold = 0.75
+margin-critical-threshold = 0.85
+stop-loss = 0.07                    # per-leg position stop loss (independent of stop-loss-zscore)
+max-position-size = 0.10
+max-position-size-usd = 5000.00
+max-positions = 10                  # each pair = 2 positions; 3 pairs = 6 positions minimum
+daily-loss-limit = 0.02
+
+[logging]
+log-level = "info"
+log-file = "pacabot.log"
