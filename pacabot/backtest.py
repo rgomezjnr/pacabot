@@ -3,7 +3,7 @@
 import subprocess
 import sys
 import webbrowser
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -58,14 +58,14 @@ def _momentum_signals(close: pd.DataFrame, params: MomentumParameters, long_only
     ranked = returns.rank(axis=1, ascending=False)
     in_top = ranked <= params.top_n
 
-    entries = in_top & ~in_top.shift(1).fillna(False)
-    exits = ~in_top & in_top.shift(1).fillna(False)
+    entries = in_top & ~in_top.shift(1, fill_value=False)
+    exits = ~in_top & in_top.shift(1, fill_value=False)
 
     short_entries = short_exits = None
     if not long_only:
         in_bottom = ranked > (ranked.shape[1] - params.top_n)
-        short_entries = in_bottom & ~in_bottom.shift(1).fillna(False)
-        short_exits = ~in_bottom & in_bottom.shift(1).fillna(False)
+        short_entries = in_bottom & ~in_bottom.shift(1, fill_value=False)
+        short_exits = ~in_bottom & in_bottom.shift(1, fill_value=False)
 
     return entries, exits, short_entries, short_exits
 
@@ -112,8 +112,8 @@ def _mean_reversion_signals(close: pd.DataFrame, params: MeanReversionParameters
             exits[col] = z > zp.exit_threshold
 
     # Convert level signals to entry/exit edges
-    entry_edges = entries & ~entries.shift(1).fillna(False)
-    exit_edges = exits & ~exits.shift(1).fillna(False)
+    entry_edges = entries & ~entries.shift(1, fill_value=False)
+    exit_edges = exits & ~exits.shift(1, fill_value=False)
     return entry_edges, exit_edges
 
 
@@ -169,7 +169,7 @@ def _pairs_signals(close: pd.DataFrame, params: PairsParameters):
 # ---------------------------------------------------------------------------
 
 def _print_summary(portfolio, strategy_name: str, start: str, end: str) -> None:
-    stats = portfolio.stats()
+    stats = portfolio.stats(group_by=True)
     print()
     print("=" * 60)
     print(f"  pacabot Backtest — {strategy_name}")
@@ -193,7 +193,7 @@ def _save_outputs(portfolio, strategy_name: str, start_str: str, end_str: str) -
     # HTML chart
     html_path = _RESULTS_DIR / f"{base_name}.html"
     try:
-        fig = portfolio.plot()
+        fig = portfolio.plot(group_by=True)
         fig.write_html(str(html_path))
     except Exception as e:
         get_logger().warning("Could not generate HTML chart: %s", e)
@@ -240,55 +240,80 @@ def run_backtest(cfg: Config, start_str: str, end_str: str) -> None:
     if strategy_name == "cross-sectional-momentum":
         params: MomentumParameters = cfg.strategy.parameters  # type: ignore[assignment]
         universe = get_universe(cfg.strategy.universe, cfg.strategy.custom_tickers or None)
-        close = _fetch_close(data_client, universe, start_dt, end_dt)
-        if close.empty:
+        warmup_start = start_dt - timedelta(days=int(params.lookback_period * 1.5))
+        close_raw = _fetch_close(data_client, universe, warmup_start, end_dt)
+        if close_raw.empty:
             logger.error("No price data returned for backtest")
             sys.exit(1)
 
-        entries, exits, short_entries, short_exits = _momentum_signals(
-            close, params, cfg.strategy.long_only or True
+        entries_raw, exits_raw, _, _ = _momentum_signals(
+            close_raw, params, cfg.strategy.long_only or True
         )
+        start_date = pd.Timestamp(start_str)
+        close = close_raw.loc[close_raw.index >= start_date]
+        entries = entries_raw.loc[entries_raw.index >= start_date]
+        exits = exits_raw.loc[exits_raw.index >= start_date]
+
         portfolio = vbt.Portfolio.from_signals(
-            close, entries=entries, exits=exits, freq="D", init_cash=100_000
+            close, entries=entries, exits=exits, freq="D", init_cash=100_000, group_by=True
         )
 
     elif strategy_name == "mean-reversion":
         params_mr: MeanReversionParameters = cfg.strategy.parameters  # type: ignore[assignment]
         universe = get_universe(cfg.strategy.universe, cfg.strategy.custom_tickers or None)
-        close = _fetch_close(data_client, universe, start_dt, end_dt)
-        if close.empty:
+        if params_mr.indicator == "rsi" and params_mr.rsi:
+            mr_lookback = params_mr.rsi.period
+        elif params_mr.indicator == "bollinger-bands" and params_mr.bollinger_bands:
+            mr_lookback = params_mr.bollinger_bands.period
+        elif params_mr.indicator == "zscore" and params_mr.zscore:
+            mr_lookback = params_mr.zscore.period
+        else:
+            mr_lookback = 100
+        warmup_start = start_dt - timedelta(days=int(mr_lookback * 1.5))
+        close_raw = _fetch_close(data_client, universe, warmup_start, end_dt)
+        if close_raw.empty:
             logger.error("No price data returned for backtest")
             sys.exit(1)
 
-        entries, exits = _mean_reversion_signals(close, params_mr)
+        entries_raw, exits_raw = _mean_reversion_signals(close_raw, params_mr)
+        start_date = pd.Timestamp(start_str)
+        close = close_raw.loc[close_raw.index >= start_date]
+        entries = entries_raw.loc[entries_raw.index >= start_date]
+        exits = exits_raw.loc[exits_raw.index >= start_date]
+
         portfolio = vbt.Portfolio.from_signals(
-            close, entries=entries, exits=exits, freq="D", init_cash=100_000
+            close, entries=entries, exits=exits, freq="D", init_cash=100_000, group_by=True
         )
 
     elif strategy_name == "pairs-trading":
         params_p: PairsParameters = cfg.strategy.parameters  # type: ignore[assignment]
         all_tickers = list({t for pair in params_p.pairs for t in pair})
-        close = _fetch_close(data_client, all_tickers, start_dt, end_dt)
-        if close.empty:
+        warmup_start = start_dt - timedelta(days=int(params_p.lookback_period * 1.5))
+        close_raw = _fetch_close(data_client, all_tickers, warmup_start, end_dt)
+        if close_raw.empty:
             logger.error("No price data returned for backtest")
             sys.exit(1)
 
-        signals = _pairs_signals(close, params_p)
+        signals = _pairs_signals(close_raw, params_p)
         if signals is None:
             logger.error("No valid pairs found in data")
             sys.exit(1)
 
-        # Use long leg price for portfolio (simplified)
-        long_cols = [f"{p[0]}/{p[1]}_long_{p[0]}" for p in params_p.pairs if p[0] in close.columns]
-        close_long = close[[p[0] for p in params_p.pairs if p[0] in close.columns]]
-        close_long.columns = long_cols[: len(close_long.columns)]
+        start_date = pd.Timestamp(start_str)
+        long_cols = [f"{p[0]}/{p[1]}_long_{p[0]}" for p in params_p.pairs if p[0] in close_raw.columns]
+        close_long_raw = close_raw[[p[0] for p in params_p.pairs if p[0] in close_raw.columns]]
+        close_long_raw.columns = long_cols[: len(close_long_raw.columns)]
+        close_long = close_long_raw.loc[close_long_raw.index >= start_date]
+        entries_long = signals["entries_long"].loc[signals["entries_long"].index >= start_date]
+        exits_long = signals["exits_long"].loc[signals["exits_long"].index >= start_date]
 
         portfolio = vbt.Portfolio.from_signals(
             close_long,
-            entries=signals["entries_long"],
-            exits=signals["exits_long"],
+            entries=entries_long,
+            exits=exits_long,
             freq="D",
             init_cash=100_000,
+            group_by=True,
         )
 
     else:
