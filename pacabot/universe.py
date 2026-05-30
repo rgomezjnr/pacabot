@@ -45,8 +45,7 @@ def _wiki_tables(url: str) -> list[pd.DataFrame]:
 
 def _fetch_sp500() -> list[str]:
     tables = _wiki_tables("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")
-    tickers = tables[0]["Symbol"].tolist()
-    return [t.replace(".", "-") for t in tickers]
+    return tables[0]["Symbol"].tolist()
 
 
 def _fetch_sp100() -> list[str]:
@@ -54,7 +53,7 @@ def _fetch_sp100() -> list[str]:
     for table in tables:
         cols = [c.lower() for c in table.columns]
         if "symbol" in cols:
-            return [t.replace(".", "-") for t in table["Symbol"].tolist()]
+            return table["Symbol"].tolist()
     raise ValueError("Could not find S&P 100 ticker table on Wikipedia")
 
 
@@ -63,7 +62,7 @@ def _fetch_nasdaq100() -> list[str]:
     for table in tables:
         cols = [str(c).lower() for c in table.columns]
         if "ticker" in cols:
-            return [t.replace(".", "-") for t in table["Ticker"].tolist()]
+            return table["Ticker"].tolist()
     raise ValueError("Could not find Nasdaq-100 ticker table on Wikipedia")
 
 
@@ -72,7 +71,7 @@ def _fetch_dow30() -> list[str]:
     for table in tables:
         cols = [str(c).lower() for c in table.columns]
         if "symbol" in cols:
-            return [t.replace(".", "-") for t in table["Symbol"].tolist()]
+            return table["Symbol"].tolist()
     raise ValueError("Could not find Dow 30 ticker table on Wikipedia")
 
 
@@ -98,7 +97,7 @@ def _fetch_ishares(etf: str) -> list[str]:
     tickers = df["Ticker"].dropna().tolist()
     # Filter to valid ticker strings (exclude cash, futures lines)
     return [
-        str(t).replace(".", "-")
+        str(t)
         for t in tickers
         if isinstance(t, str) and t.isalpha() and len(t) <= 5
     ]
