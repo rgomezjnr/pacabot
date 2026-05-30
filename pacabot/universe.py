@@ -51,7 +51,7 @@ def _fetch_sp500() -> list[str]:
 def _fetch_sp100() -> list[str]:
     tables = _wiki_tables("https://en.wikipedia.org/wiki/S%26P_100")
     for table in tables:
-        cols = [c.lower() for c in table.columns]
+        cols = [str(c).lower() for c in table.columns]
         if "symbol" in cols:
             return table["Symbol"].tolist()
     raise ValueError("Could not find S&P 100 ticker table on Wikipedia")
