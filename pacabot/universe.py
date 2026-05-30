@@ -2,6 +2,7 @@
 
 import json
 import time
+from io import StringIO
 from pathlib import Path
 
 import pandas as pd
@@ -11,6 +12,7 @@ from pacabot.logging_setup import get_logger
 
 _CACHE_DIR = Path(".cache")
 _CACHE_TTL = 86400  # 24 hours
+_HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; pacabot/1.0)"}
 
 
 def _cache_path(slug: str) -> Path:
@@ -35,14 +37,20 @@ def _save_cache(slug: str, tickers: list[str]) -> None:
     _cache_path(slug).write_text(json.dumps({"ts": time.time(), "tickers": tickers}))
 
 
+def _wiki_tables(url: str) -> list[pd.DataFrame]:
+    resp = requests.get(url, headers=_HEADERS, timeout=30)
+    resp.raise_for_status()
+    return pd.read_html(StringIO(resp.text))
+
+
 def _fetch_sp500() -> list[str]:
-    tables = pd.read_html("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")
+    tables = _wiki_tables("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")
     tickers = tables[0]["Symbol"].tolist()
     return [t.replace(".", "-") for t in tickers]
 
 
 def _fetch_sp100() -> list[str]:
-    tables = pd.read_html("https://en.wikipedia.org/wiki/S%26P_100")
+    tables = _wiki_tables("https://en.wikipedia.org/wiki/S%26P_100")
     for table in tables:
         cols = [c.lower() for c in table.columns]
         if "symbol" in cols:
@@ -51,7 +59,7 @@ def _fetch_sp100() -> list[str]:
 
 
 def _fetch_nasdaq100() -> list[str]:
-    tables = pd.read_html("https://en.wikipedia.org/wiki/Nasdaq-100")
+    tables = _wiki_tables("https://en.wikipedia.org/wiki/Nasdaq-100")
     for table in tables:
         cols = [str(c).lower() for c in table.columns]
         if "ticker" in cols:
@@ -60,7 +68,7 @@ def _fetch_nasdaq100() -> list[str]:
 
 
 def _fetch_dow30() -> list[str]:
-    tables = pd.read_html("https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average")
+    tables = _wiki_tables("https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average")
     for table in tables:
         cols = [str(c).lower() for c in table.columns]
         if "symbol" in cols:
@@ -75,8 +83,7 @@ def _fetch_ishares(etf: str) -> list[str]:
         + ("239707/ISHARES-RUSSELL-1000-ETF" if etf == "IWB" else "239710/ISHARES-RUSSELL-2000-ETF")
         + "/1467271812596.ajax?tab=holdings&fileType=csv"
     )
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; pacabot/1.0)"}
-    resp = requests.get(url, headers=headers, timeout=30)
+    resp = requests.get(url, headers=_HEADERS, timeout=30)
     resp.raise_for_status()
     lines = resp.text.splitlines()
     # iShares CSV has header rows before the actual data; find the Ticker column
@@ -85,7 +92,6 @@ def _fetch_ishares(etf: str) -> list[str]:
         if "Ticker" in line and "Name" in line:
             start = i
             break
-    from io import StringIO
     df = pd.read_csv(StringIO("\n".join(lines[start:])), on_bad_lines="skip")
     if "Ticker" not in df.columns:
         raise ValueError(f"Could not parse iShares holdings CSV for {etf}")
