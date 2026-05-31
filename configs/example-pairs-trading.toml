@@ -17,15 +17,22 @@ lookback-period = 60        # rolling window for spread mean, std dev, and OLS h
 entry-zscore = 2.0          # enter when spread z-score magnitude exceeds this; positive float
 exit-zscore = 0.5           # exit when spread z-score reverts within this of zero; < entry-zscore
 stop-loss-zscore = 3.0      # cut losses if spread widens beyond this; > entry-zscore
-recalculate-frequency = "monthly"  # weekly | monthly
+recalculate-frequency = "weekly"  # weekly | monthly
 
 # Define pairs as a list of [tickerA, tickerB] arrays.
 # Research cointegration before adding pairs.
 # Examples of historically correlated pairs (verify before trading):
 pairs = [
-    ["KO",  "PEP"],   # Consumer staples: Coca-Cola / PepsiCo
-    ["XOM", "CVX"],   # Energy: ExxonMobil / Chevron
-    ["JPM", "BAC"],   # Financials: JPMorgan / Bank of America
+    ["KO",   "PEP"],  # Consumer staples: Coca-Cola / PepsiCo
+    ["XOM",  "CVX"],  # Energy: ExxonMobil / Chevron
+    ["JPM",  "BAC"],  # Financials: JPMorgan / Bank of America
+    ["GS",   "MS"],   # Investment banks: Goldman Sachs / Morgan Stanley
+    ["HD",   "LOW"],  # Home improvement retail: Home Depot / Lowe's
+    ["MCD",  "YUM"],  # Quick-service restaurants: McDonald's / Yum! Brands
+    ["WMT",  "TGT"],  # Mass retail: Walmart / Target
+    ["MRK",  "PFE"],  # Large-cap pharma: Merck / Pfizer
+    ["UPS",  "FDX"],  # Package delivery: UPS / FedEx
+    ["VZ",   "T"],    # US telecoms: Verizon / AT&T
 ]
 
 [execution]
@@ -39,7 +46,7 @@ margin-critical-threshold = 0.85
 stop-loss = 0.07                    # per-leg position stop loss (independent of stop-loss-zscore)
 max-position-size = 0.10
 max-position-size-usd = 5000.00
-max-positions = 10                  # each pair = 2 positions; 3 pairs = 6 positions minimum
+max-positions = 20                  # each pair = 2 positions; 10 pairs = 20 positions maximum
 daily-loss-limit = 0.02
 
 [logging]
