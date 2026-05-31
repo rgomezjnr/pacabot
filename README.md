@@ -337,3 +337,29 @@ pacabot uses a two-layer approach to protect margin accounts:
 - At `margin-critical-threshold`: flatten all positions, halt the bot
 
 After a critical halt or daily loss limit breach, **manual restart is required**. Inspect the account, resolve the issue, then restart.
+
+## Support
+
+If you find an issue or have any feedback please submit an issue on [GitHub](https://github.com/rgomezjnr/pacabot/issues).
+
+You can also DM me via Twitter/X: [@rgomezjnr](https://x.com/rgomezjnr).
+
+If you would like to show your support donations are greatly appreciated via:
+
+- [GitHub Sponsors](https://github.com/sponsors/rgomezjnr)
+- [PayPal](https://paypal.me/rgomezjnr)
+- [Venmo](https://account.venmo.com/u/rgomezjnr)
+- [Strike](https://strike.me/rgomezjnr)
+- Bitcoin: bc1qh46qmztl77d9dl8f6ezswvqdqxcaurrqegca2p
+
+## Author
+
+[Robert Gomez, Jr.](https://github.com/rgomezjnr)
+
+## Source code
+
+https://github.com/rgomezjnr/pacabot
+
+## License
+
+[MIT](LICENSE) © 2026 Robert Gomez, Jr.
