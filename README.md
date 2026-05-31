@@ -8,6 +8,20 @@ A fire-and-forget Python CLI tool for running algorithmic trading strategies aga
 
 ---
 
+## Disclaimer
+
+> **This software is provided for educational and informational purposes only. It is not financial advice and must not be construed as a recommendation to buy, sell, or hold any security.**
+>
+> The author is not a registered investment adviser under the Investment Advisers Act of 1940, or any equivalent state or local law. Nothing in this software, its documentation, or any related materials constitutes investment, legal, or tax advice. Consult a qualified financial professional before making any investment decision.
+>
+> Trading stocks and other securities involves substantial risk of loss and is not suitable for all investors. **Past performance is not indicative of future results.** The strategies implemented in this software are experimental and may result in significant financial losses, including the loss of your entire investment.
+>
+> The author shall not be liable for any financial losses, direct or indirect damages, or other consequences arising from the use of this software. **Use entirely at your own risk.**
+>
+> Any securities, tickers, or strategies referenced in this software or its documentation are for illustrative purposes only and do not constitute an endorsement or recommendation of any specific asset, issuer, or trading approach.
+
+---
+
 ## Installation
 
 Python 3.11 or later is required.
