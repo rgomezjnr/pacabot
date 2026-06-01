@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import vectorbt as vbt
+from alpaca.data.enums import DataFeed
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
@@ -39,6 +40,7 @@ def _fetch_close(
         timeframe=TimeFrame.Day,
         start=start,
         end=end,
+        feed=DataFeed.IEX,
     )
     bars = client.get_stock_bars(req)
     df = bars.df

@@ -5,6 +5,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 import pandas as pd
+from alpaca.data.enums import DataFeed
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
@@ -165,6 +166,7 @@ class AlpacaClient:
             timeframe=timeframe,
             start=start,
             end=end,
+            feed=DataFeed.IEX,
         )
         bars = self.data.get_stock_bars(req)
         return bars.df
