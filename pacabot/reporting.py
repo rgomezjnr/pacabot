@@ -38,7 +38,7 @@ def generate_eod_report(cfg: Config, client: AlpacaClient, risk: RiskManager) ->
         f"    End of day   : ${equity:>12,.2f}",
         f"    Day P&L      : ${day_pnl:>+12,.2f}  ({day_pnl_pct:+.2f}%)",
         "",
-        f"  MARGIN UTILISATION: {margin_util * 100:.1f}%",
+        f"  MARGIN UTILIZATION: {margin_util * 100:.1f}%",
         "",
         f"  OPEN POSITIONS ({len(positions)})",
     ]

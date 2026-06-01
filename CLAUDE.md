@@ -182,7 +182,7 @@ Minimum contents:
 - Day P&L (dollar and %)
 - Open positions and unrealised P&L
 - Trades executed during the day (count, total volume)
-- Current margin utilisation
+- Current margin utilization
 
 ## Order Execution
 
