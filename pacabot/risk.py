@@ -144,11 +144,11 @@ class RiskManager:
     def position_count(self) -> int:
         return len(self._client.get_positions())
 
-    def can_add_position(self) -> bool:
-        """Check max concurrent positions limit."""
+    def can_add_position(self, pending: int = 0) -> bool:
+        """Check max concurrent positions limit, including submitted-but-unfilled orders."""
         if self._cfg.max_positions == 0:
             return True
-        return self.position_count() < self._cfg.max_positions
+        return self.position_count() + pending < self._cfg.max_positions
 
     def calculate_shares(self, price: float) -> int:
         """Return integer share count for a new position at given price."""

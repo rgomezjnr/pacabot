@@ -102,6 +102,7 @@ class MomentumStrategy(BaseStrategy):
                 self._execution.close_position(symbol, reason="momentum rebalance")
 
         # Open new positions
+        self._execution.reset_pending_entries()
         for symbol in target_longs - current_symbols:
             self._execution.open_position(symbol, long=True)
 

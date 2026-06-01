@@ -279,6 +279,7 @@ class MeanReversionStrategy(BaseStrategy):
 
         # --- Process entries ---
         positions = {p.symbol for p in self._client.get_positions()}  # refresh
+        self._execution.reset_pending_entries()
         for symbol in self._universe:
             if symbol in positions:
                 continue

@@ -20,6 +20,11 @@ class ExecutionManager:
         self._risk = risk
         self._strategy = strategy_cfg
         self._logger = get_logger()
+        self._pending_entries: int = 0
+
+    def reset_pending_entries(self) -> None:
+        """Reset the pending-entries counter at the start of each tick's entry phase."""
+        self._pending_entries = 0
 
     # ------------------------------------------------------------------
     # GTC order reconciliation
@@ -77,7 +82,7 @@ class ExecutionManager:
         """
         if not self._risk.can_open_position():
             return False
-        if not self._risk.can_add_position():
+        if not self._risk.can_add_position(self._pending_entries):
             self._logger.warning(
                 "Skipping %s — max concurrent positions (%d) reached",
                 symbol,
@@ -114,6 +119,8 @@ class ExecutionManager:
         except Exception as e:
             self._logger.error("Order submission failed for %s: %s", symbol, e)
             return False
+
+        self._pending_entries += 1
 
         # Place GTC stop loss
         if self._risk._cfg.stop_loss is not None:
@@ -161,7 +168,7 @@ class ExecutionManager:
         """Open a pairs trade: long leg + short leg scaled by hedge ratio."""
         if not self._risk.can_open_position():
             return False
-        if not self._risk.can_add_position():
+        if not self._risk.can_add_position(self._pending_entries):
             self._logger.warning("Skipping pair — max positions reached")
             return False
 
@@ -192,6 +199,8 @@ class ExecutionManager:
         except Exception as e:
             self._logger.error("Pair order failed %s/%s: %s", long_symbol, short_symbol, e)
             return False
+
+        self._pending_entries += 2  # pairs open two Alpaca positions
 
         # Stop losses for both legs
         if self._risk._cfg.stop_loss is not None:

@@ -127,6 +127,7 @@ class PairsStrategy(BaseStrategy):
         open_pairs = self._open_pairs()
         positions = {p.symbol for p in self._client.get_positions()}
         recalculate = self.should_rebalance()
+        self._execution.reset_pending_entries()
 
         for pair in self._params.pairs:
             a, b = pair[0], pair[1]
