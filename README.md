@@ -275,14 +275,14 @@ Both `stop-loss-zscore` and the per-position `stop-loss` in `[risk]` apply indep
 
 #### Parameters
 
-| Parameter | Type | Valid values | Conventional |
-|---|---|---|---|
-| `pairs` | array of 2-ticker arrays | Min 1 pair | — |
-| `lookback-period` | integer (days) | Positive integer | 60 |
-| `entry-zscore` | float | Positive float | 2.0 |
-| `exit-zscore` | float | Positive float < entry-zscore | 0.5 |
-| `stop-loss-zscore` | float | Positive float > entry-zscore | 3.0 |
-| `recalculate-frequency` | string | `weekly`, `monthly` | — |
+| Parameter | Type | Valid values | Conventional | Description |
+|---|---|---|---|---|
+| `pairs` | array of 2-ticker arrays | Min 1 pair | — | Ticker pairs to trade. Each pair must be exactly 2 tickers. |
+| `lookback-period` | integer (days) | Positive integer | 60 | Rolling window used to compute the spread mean, standard deviation, and OLS hedge ratio. |
+| `entry-zscore` | float | Positive float | 2.0 | Enter a position when the spread z-score exceeds this magnitude in either direction. |
+| `exit-zscore` | float | Positive float < `entry-zscore` | 0.5 | Exit when the spread z-score reverts within this distance of zero. |
+| `stop-loss-zscore` | float | Positive float > `entry-zscore` | 3.0 | Cut the position if the spread widens beyond this z-score, indicating the pair relationship may have broken down. |
+| `recalculate-frequency` | string | `weekly`, `monthly` | — | How often the OLS hedge ratio is recalculated for open positions. The z-score is always computed fresh on every tick; this controls how often the stored hedge ratio on existing trades is updated. |
 
 #### Example Config
 
