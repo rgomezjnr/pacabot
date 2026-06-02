@@ -116,6 +116,22 @@ class AlpacaClient:
         )
         return order
 
+    def wait_for_fill(self, order_id: str, timeout: float = 10.0) -> bool:
+        """Poll until the order is filled or timeout is reached. Runs synchronously (call from a thread)."""
+        import time as _time
+        deadline = _time.monotonic() + timeout
+        while _time.monotonic() < deadline:
+            order = self.trading.get_order_by_id(order_id)
+            status = order.status.value
+            if status == "filled":
+                return True
+            if status in ("canceled", "expired", "rejected", "done_for_day"):
+                self._logger.warning("Order %s ended with status '%s'; stop skipped", order_id, status)
+                return False
+            _time.sleep(0.5)
+        self._logger.warning("Order %s not filled within %.0fs; stop skipped", order_id, timeout)
+        return False
+
     def submit_stop_order(
         self,
         symbol: str,

@@ -145,6 +145,15 @@ class Scheduler:
                         self._logger.error("Strategy tick error: %s", e)
 
                     await self._maybe_check_margin()
+                else:
+                    now_utc = datetime.now(tz=timezone.utc)
+                    eastern_h = (now_utc.hour - 4) % 24
+                    eastern_m = now_utc.minute
+                    self._logger.info(
+                        "Outside trading window (%02d:%02d ET) — waiting until %s ET",
+                        eastern_h, eastern_m,
+                        self._cfg.execution.trading_start or "open",
+                    )
 
                 await asyncio.sleep(_TICK_INTERVAL)
 
@@ -159,12 +168,11 @@ class Scheduler:
                         next_open = next_open.replace(tzinfo=timezone.utc)
                     seconds_until_open = max(0, (next_open - now_utc).total_seconds())
                     sleep_secs = min(seconds_until_open, _SLEEP_POLL)
-                    if sleep_secs > 60:
-                        self._logger.debug(
-                            "Market closed — sleeping %.0fs (next open in %.0fs)",
-                            sleep_secs,
-                            seconds_until_open,
-                        )
+                    self._logger.info(
+                        "Market closed — sleeping %.0fs (next open: %s)",
+                        sleep_secs,
+                        next_open.strftime("%Y-%m-%d %H:%M ET") if hasattr(next_open, "strftime") else "unknown",
+                    )
                 except Exception:
                     sleep_secs = _SLEEP_POLL
 

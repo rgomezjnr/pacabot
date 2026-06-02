@@ -113,19 +113,18 @@ class ExecutionManager:
 
         try:
             if order_type == "market":
-                self._client.submit_market_order(symbol, shares, side, TimeInForce.DAY)
+                entry_order = self._client.submit_market_order(symbol, shares, side, TimeInForce.DAY)
             else:
-                self._client.submit_limit_order(symbol, shares, side, price, TimeInForce.DAY)
+                entry_order = self._client.submit_limit_order(symbol, shares, side, price, TimeInForce.DAY)
         except Exception as e:
             self._logger.error("Order submission failed for %s: %s", symbol, e)
             return False
 
         self._pending_entries += 1
 
-        # Place GTC stop loss
         if self._risk._cfg.stop_loss is not None:
             stop_price = self._risk.stop_loss_price(price, "long" if long else "short")
-            if stop_price:
+            if stop_price and self._client.wait_for_fill(str(entry_order.id)):
                 stop_side = OrderSide.SELL if long else OrderSide.BUY
                 try:
                     self._client.submit_stop_order(symbol, shares, stop_side, stop_price)
@@ -189,30 +188,29 @@ class ExecutionManager:
         short_shares = max(int(long_shares * hedge_ratio), 1)
 
         order_type = self._strategy.order_type
+
         try:
             if order_type == "market":
-                self._client.submit_market_order(long_symbol, long_shares, OrderSide.BUY, TimeInForce.DAY)
-                self._client.submit_market_order(short_symbol, short_shares, OrderSide.SELL, TimeInForce.DAY)
+                long_order = self._client.submit_market_order(long_symbol, long_shares, OrderSide.BUY, TimeInForce.DAY)
+                short_order = self._client.submit_market_order(short_symbol, short_shares, OrderSide.SELL, TimeInForce.DAY)
             else:
-                self._client.submit_limit_order(long_symbol, long_shares, OrderSide.BUY, long_price, TimeInForce.DAY)
-                self._client.submit_limit_order(short_symbol, short_shares, OrderSide.SELL, short_price, TimeInForce.DAY)
+                long_order = self._client.submit_limit_order(long_symbol, long_shares, OrderSide.BUY, long_price, TimeInForce.DAY)
+                short_order = self._client.submit_limit_order(short_symbol, short_shares, OrderSide.SELL, short_price, TimeInForce.DAY)
         except Exception as e:
             self._logger.error("Pair order failed %s/%s: %s", long_symbol, short_symbol, e)
             return False
 
-        self._pending_entries += 2  # pairs open two Alpaca positions
+        self._pending_entries += 2
 
-        # Stop losses for both legs
         if self._risk._cfg.stop_loss is not None:
-            for sym, price, side, direction in [
-                (long_symbol, long_price, OrderSide.SELL, "long"),
-                (short_symbol, short_price, OrderSide.BUY, "short"),
+            for order, sym, price, stop_side, direction, qty in [
+                (long_order, long_symbol, long_price, OrderSide.SELL, "long", long_shares),
+                (short_order, short_symbol, short_price, OrderSide.BUY, "short", short_shares),
             ]:
                 stop_price = self._risk.stop_loss_price(price, direction)
-                if stop_price:
-                    qty = long_shares if sym == long_symbol else short_shares
+                if stop_price and self._client.wait_for_fill(str(order.id)):
                     try:
-                        self._client.submit_stop_order(sym, qty, side, stop_price)
+                        self._client.submit_stop_order(sym, qty, stop_side, stop_price)
                     except Exception as e:
                         self._logger.error("Stop order failed for %s: %s", sym, e)
 
