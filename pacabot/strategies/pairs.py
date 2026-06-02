@@ -94,6 +94,8 @@ class PairsStrategy(BaseStrategy):
         if last is None:
             return True
         freq = self._params.recalculate_frequency
+        if freq == "daily":
+            return today != last
         if freq == "weekly":
             return (today - last).days >= 7
         if freq == "monthly":

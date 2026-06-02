@@ -13,11 +13,11 @@ order-type = "market"       # market | limit
 # long-only is not set — pairs trading is always long/short
 
 [strategy.parameters]
-lookback-period = 60        # rolling window for spread mean, std dev, and OLS hedge ratio (days)
-entry-zscore = 2.0          # enter when spread z-score magnitude exceeds this; positive float
-exit-zscore = 0.5           # exit when spread z-score reverts within this of zero; < entry-zscore
-stop-loss-zscore = 3.0      # cut losses if spread widens beyond this; > entry-zscore
-recalculate-frequency = "weekly"  # weekly | monthly
+lookback-period = 60                # rolling window for spread mean, std dev, and OLS hedge ratio (days)
+entry-zscore = 2.0                  # enter when spread z-score magnitude exceeds this; positive float
+exit-zscore = 0.5                   # exit when spread z-score reverts within this of zero; < entry-zscore
+stop-loss-zscore = 3.0              # cut losses if spread widens beyond this; > entry-zscore
+recalculate-frequency = "weekly"    # daily | weekly | monthly
 
 # Define pairs as a list of [tickerA, tickerB] arrays.
 # Research cointegration before adding pairs.

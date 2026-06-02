@@ -282,7 +282,7 @@ Both `stop-loss-zscore` and the per-position `stop-loss` in `[risk]` apply indep
 | `entry-zscore` | float | Positive float | 2.0 | Enter a position when the spread z-score exceeds this magnitude in either direction. |
 | `exit-zscore` | float | Positive float < `entry-zscore` | 0.5 | Exit when the spread z-score reverts within this distance of zero. |
 | `stop-loss-zscore` | float | Positive float > `entry-zscore` | 3.0 | Cut the position if the spread widens beyond this z-score, indicating the pair relationship may have broken down. |
-| `recalculate-frequency` | string | `weekly`, `monthly` | — | How often the OLS hedge ratio is recalculated for open positions. The z-score is always computed fresh on every tick; this controls how often the stored hedge ratio on existing trades is updated. |
+| `recalculate-frequency` | string | `daily`, `weekly`, `monthly` | — | How often the OLS hedge ratio is recalculated for open positions. The z-score is always computed fresh on every tick; this controls how often the stored hedge ratio on existing trades is updated. |
 
 #### Example Config
 

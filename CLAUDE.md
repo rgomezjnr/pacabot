@@ -334,7 +334,7 @@ Pairs are always pre-defined in config — no dynamic discovery. Hedge ratio use
 | `entry-zscore` | Enter when spread z-score exceeds this magnitude | Positive float | 2.0 |
 | `exit-zscore` | Exit when spread z-score reverts within this of zero | Positive float < `entry-zscore` | 0.5 |
 | `stop-loss-zscore` | Cut losses if spread widens beyond this (broken thesis) | Positive float > `entry-zscore` | 3.0 |
-| `recalculate-frequency` | How often OLS and spread stats are recalculated | `"weekly"` or `"monthly"` | — |
+| `recalculate-frequency` | How often OLS and spread stats are recalculated | `"daily"`, `"weekly"`, or `"monthly"` | — |
 
 `exit-zscore` must be < `entry-zscore`. `stop-loss-zscore` must be > `entry-zscore`.
 

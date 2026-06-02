@@ -7,6 +7,7 @@ VALID_STRATEGIES = {"cross-sectional-momentum", "mean-reversion", "pairs-trading
 VALID_UNIVERSES = {"sp500", "sp100", "nasdaq100", "russell1000", "russell2000", "dow30", "custom"}
 VALID_ORDER_TYPES = {"market", "limit"}
 VALID_REBALANCE_FREQUENCIES = {"weekly", "monthly"}
+VALID_RECALCULATE_FREQUENCIES = {"daily", "weekly", "monthly"}
 VALID_LOG_LEVELS = {"critical", "error", "warning", "info", "debug"}
 VALID_INDICATORS = {"rsi", "bollinger-bands", "zscore"}
 VALID_EXIT_BANDS = {"middle", "upper"}
@@ -410,10 +411,10 @@ def _parse_pairs_parameters(params: dict) -> PairsParameters:
         _err("[strategy.parameters] 'stop-loss-zscore' must be greater than 'entry-zscore'")
 
     freq = _require(params, "recalculate-frequency", str, "strategy.parameters")
-    if freq not in VALID_REBALANCE_FREQUENCIES:
+    if freq not in VALID_RECALCULATE_FREQUENCIES:
         _err(
             f"[strategy.parameters] 'recalculate-frequency' must be one of "
-            f"{sorted(VALID_REBALANCE_FREQUENCIES)}, got '{freq}'"
+            f"{sorted(VALID_RECALCULATE_FREQUENCIES)}, got '{freq}'"
         )
 
     return PairsParameters(
