@@ -18,9 +18,9 @@ order-type = "market"       # market | limit
 # tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
 
 [strategy.parameters]
-lookback-period = 252       # days of trailing return used to rank assets
-top-n = 10                  # number of top-ranked assets to hold (and bottom-N to short)
-rebalance-frequency = "monthly"   # weekly | monthly
+lookback-period = 252               # days of trailing return used to rank assets
+top-n = 10                          # number of top-ranked assets to hold (and bottom-N to short)
+rebalance-frequency = "monthly"     # daily | weekly | monthly
 
 [execution]
 trading-start = "09:45"     # HH:MM Eastern; no orders before this time. false to disable.

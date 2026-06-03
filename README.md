@@ -152,7 +152,7 @@ Ranks all assets in the universe by trailing return and holds the top N. Rebalan
 |---|---|---|---|
 | `lookback-period` | integer | Any positive integer | Days of trailing return used to rank assets |
 | `top-n` | integer | Any positive integer | Number of top-ranked assets to hold long (and short in long/short mode) |
-| `rebalance-frequency` | string | `weekly`, `monthly` | How often to re-rank and rebalance |
+| `rebalance-frequency` | string | `daily`, `weekly`, `monthly` | How often to re-rank and rebalance |
 
 #### Lookback Period Guide
 

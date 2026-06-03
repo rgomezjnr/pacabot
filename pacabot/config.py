@@ -6,7 +6,7 @@ from pathlib import Path
 VALID_STRATEGIES = {"cross-sectional-momentum", "mean-reversion", "pairs-trading"}
 VALID_UNIVERSES = {"sp500", "sp100", "nasdaq100", "russell1000", "russell2000", "dow30", "custom"}
 VALID_ORDER_TYPES = {"market", "limit"}
-VALID_REBALANCE_FREQUENCIES = {"weekly", "monthly"}
+VALID_REBALANCE_FREQUENCIES = {"daily", "weekly", "monthly"}
 VALID_RECALCULATE_FREQUENCIES = {"daily", "weekly", "monthly"}
 VALID_LOG_LEVELS = {"critical", "error", "warning", "info", "debug"}
 VALID_INDICATORS = {"rsi", "bollinger-bands", "zscore"}
