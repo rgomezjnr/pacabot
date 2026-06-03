@@ -58,6 +58,7 @@ class PairsStrategy(BaseStrategy):
             self._params.exit_zscore,
             self._params.stop_loss_zscore,
         )
+        self._reconcile_state()
 
     # ------------------------------------------------------------------
     # State helpers for open pair trades
@@ -82,6 +83,30 @@ class PairsStrategy(BaseStrategy):
     def _clear_pair(self, a: str, b: str) -> None:
         self._state.get("open_pairs", {}).pop(f"{a}/{b}", None)
         self._save_state()
+
+    def _reconcile_state(self) -> None:
+        """Drop open_pairs entries whose Alpaca positions no longer exist."""
+        open_pairs = self._open_pairs()
+        if not open_pairs:
+            return
+        positions = {p.symbol for p in self._client.get_positions()}
+        for key, trade in list(open_pairs.items()):
+            long_sym = trade["long"]
+            short_sym = trade["short"]
+            if long_sym not in positions and short_sym not in positions:
+                a, b = key.split("/")
+                self._clear_pair(a, b)
+                self._logger.info(
+                    "Pair %s — positions closed externally; cleared from state", key
+                )
+            elif long_sym not in positions or short_sym not in positions:
+                missing = long_sym if long_sym not in positions else short_sym
+                a, b = key.split("/")
+                self._clear_pair(a, b)
+                self._logger.warning(
+                    "Pair %s — orphaned leg detected (missing %s); cleared from state",
+                    key, missing,
+                )
 
     # ------------------------------------------------------------------
     # Recalculation schedule
@@ -151,6 +176,14 @@ class PairsStrategy(BaseStrategy):
                 trade = open_pairs[key]
                 long_sym = trade["long"]
                 short_sym = trade["short"]
+
+                # If both legs were closed externally (e.g. stop triggered), clear state
+                if long_sym not in positions and short_sym not in positions:
+                    self._clear_pair(a, b)
+                    self._logger.info(
+                        "Pair %s — positions closed externally; cleared from state", key
+                    )
+                    continue
 
                 # Stop loss z-score (position-level stop loss handled by GTC orders)
                 if abs(zscore) >= self._params.stop_loss_zscore:
