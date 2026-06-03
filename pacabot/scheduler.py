@@ -64,6 +64,34 @@ class Scheduler:
 
         return True
 
+    def _window_sleep_secs(self) -> float:
+        """Return seconds to sleep when outside the trading window, and log why."""
+        now_utc = datetime.now(tz=timezone.utc)
+        eastern_h = (now_utc.hour - 4) % 24
+        eastern_m = now_utc.minute
+        eastern_s = now_utc.second
+        now_secs = eastern_h * 3600 + eastern_m * 60 + eastern_s
+
+        exec_cfg = self._cfg.execution
+        if exec_cfg.trading_start:
+            ts_h, ts_m = map(int, exec_cfg.trading_start.split(":"))
+            window_open_secs = ts_h * 3600 + ts_m * 60
+            if now_secs < window_open_secs:
+                secs = min(window_open_secs - now_secs, _SLEEP_POLL)
+                self._logger.info(
+                    "Before trading window (%02d:%02d ET) — sleeping %.0fs until %s ET",
+                    eastern_h, eastern_m, secs, exec_cfg.trading_start,
+                )
+                return secs
+
+        if exec_cfg.trading_end:
+            self._logger.debug(
+                "After trading window (%02d:%02d ET, end was %s ET)",
+                eastern_h, eastern_m, exec_cfg.trading_end,
+            )
+
+        return _TICK_INTERVAL
+
     async def _get_clock(self):
         return await asyncio.to_thread(self._client.get_clock)
 
@@ -145,17 +173,9 @@ class Scheduler:
                         self._logger.error("Strategy tick error: %s", e)
 
                     await self._maybe_check_margin()
+                    await asyncio.sleep(_TICK_INTERVAL)
                 else:
-                    now_utc = datetime.now(tz=timezone.utc)
-                    eastern_h = (now_utc.hour - 4) % 24
-                    eastern_m = now_utc.minute
-                    self._logger.info(
-                        "Outside trading window (%02d:%02d ET) — waiting until %s ET",
-                        eastern_h, eastern_m,
-                        self._cfg.execution.trading_start or "open",
-                    )
-
-                await asyncio.sleep(_TICK_INTERVAL)
+                    await asyncio.sleep(self._window_sleep_secs())
 
             else:
                 await self._maybe_eod_report(clock)
