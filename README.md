@@ -41,6 +41,12 @@ export ALPACA_SECRET_KEY="your-secret-key"
 
 Use your **paper trading** keys when `paper = true` in the config, and your **live trading** keys when `paper = false`.
 
+## Account Settings
+
+In the Alpaca dashboard, set **Day Trade Buying Power Check** to **Block on exit** (under Account → Configure).
+
+The default "Block on entry" rejects GTC stop orders placed on same-day positions, leaving those positions unprotected. "Block on exit" allows the stop to be placed; Alpaca will only block the execution if the stop would trigger a day trade on the same day the position was opened. Since pacabot holds positions overnight, the stop remains live and protects against adverse moves on subsequent days.
+
 ---
 
 ## Usage
