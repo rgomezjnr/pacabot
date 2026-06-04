@@ -271,6 +271,7 @@ The following have been confirmed; do not re-litigate unless the user raises the
 
 - Minimum holding period: not supported
 - In long/short mode (`long-only = false`): short count mirrors `top-n` exactly (e.g. `top-n = 10` → 10 longs + 10 shorts of bottom-ranked assets)
+- `max-positions` must be >= `top-n` when `long-only = true`, and >= `top-n * 2` when `long-only = false`; validated at startup
 
 ```toml
 [strategy]

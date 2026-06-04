@@ -19,7 +19,7 @@ order-type = "market"       # market | limit
 
 [strategy.parameters]
 lookback-period = 252               # days of trailing return used to rank assets
-top-n = 10                          # number of top-ranked assets to hold (and bottom-N to short)
+top-n = 10                          # number of top-ranked assets to hold long (and bottom-N to short)
 rebalance-frequency = "monthly"     # daily | weekly | monthly
 
 [execution]
@@ -34,7 +34,7 @@ margin-critical-threshold = 0.90    # flatten all positions + halt above this ut
 stop-loss = 0.05                    # exit if position moves 5% against entry; false for none
 max-position-size = 0.10            # max position as fraction of account equity (10%)
 max-position-size-usd = 5000.00     # max position in dollars; more restrictive limit applied
-max-positions = 10                  # max simultaneous open positions; 0 for uncapped
+max-positions = 10                  # must be >= top-n (long-only = true) or >= top-n * 2 (long-only = false); 0 for uncapped
 daily-loss-limit = 0.02             # halt if account is down 2% on the day; false to disable
 
 [logging]

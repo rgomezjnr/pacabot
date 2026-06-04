@@ -509,6 +509,23 @@ def load_config(path: str) -> Config:
     risk = _parse_risk(raw)
     logging_cfg = _parse_logging(raw)
 
+    # Cross-field validation
+    if risk.max_positions != 0 and strategy.name in ("cross-sectional-momentum", "mean-reversion"):
+        params = strategy.parameters
+        if hasattr(params, "top_n"):
+            required = params.top_n if strategy.long_only else params.top_n * 2
+            if risk.max_positions < required:
+                _err(
+                    f"[risk] 'max-positions' ({risk.max_positions}) is less than the number of "
+                    f"positions the strategy requires ({required}); "
+                    + (
+                        f"set max-positions >= {required} or raise top-n"
+                        if strategy.long_only
+                        else f"set max-positions >= {required} (top-n * 2 in long/short mode), "
+                             f"or raise top-n, or set long-only = true"
+                    )
+                )
+
     return Config(
         account=account,
         strategy=strategy,

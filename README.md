@@ -151,7 +151,7 @@ Ranks all assets in the universe by trailing return and holds the top N. Rebalan
 | Parameter | Type | Valid values | Description |
 |---|---|---|---|
 | `lookback-period` | integer | Any positive integer | Days of trailing return used to rank assets |
-| `top-n` | integer | Any positive integer | Number of top-ranked assets to hold long (and short in long/short mode) |
+| `top-n` | integer | Any positive integer | Number of top-ranked assets to hold long (and short in long/short mode). `max-positions` must be >= `top-n` (`long-only = true`) or >= `top-n * 2` (`long-only = false`). |
 | `rebalance-frequency` | string | `daily`, `weekly`, `monthly` | How often to re-rank and rebalance |
 
 #### Lookback Period Guide
@@ -175,6 +175,18 @@ Avoid setting `top-n` to a large percentage of a large universe. On a $50,000 ac
 - Slippage and `max-position-size-usd` limits will override and reduce positions further
 
 For most retail accounts, `top-n` between **5 and 20** is most practical.
+
+#### `max-positions` and `top-n` Must Be Consistent
+
+`max-positions` must be large enough to accommodate the strategy's target portfolio:
+
+| Mode | Minimum `max-positions` | Example |
+|---|---|---|
+| `long-only = true` | `top-n` | `top-n = 10` → `max-positions >= 10` |
+| `long-only = false` | `top-n * 2` | `top-n = 5` → `max-positions >= 10` |
+| uncapped | `0` | always valid |
+
+pacabot validates this at startup and exits with an error if the constraint is violated. Setting `max-positions` below the required minimum means the strategy cannot open all its target positions — longs are processed first, so shorts will be silently skipped entirely.
 
 #### Example Config
 
