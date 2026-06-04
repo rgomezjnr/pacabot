@@ -176,7 +176,10 @@ class AlpacaClient:
     ) -> pd.DataFrame:
         """Return a DataFrame of OHLCV bars with MultiIndex (symbol, timestamp)."""
         end = datetime.now(tz=timezone.utc)
-        start = end - timedelta(days=days + 30)  # buffer for weekends/holidays
+        # days is in trading days; multiply by 365/252 to get calendar days, plus a
+        # fixed 10-day buffer for holidays/gaps at the edges of the window.
+        calendar_days = int(days * 365 / 252) + 10
+        start = end - timedelta(days=calendar_days)
         req = StockBarsRequest(
             symbol_or_symbols=symbols,
             timeframe=timeframe,

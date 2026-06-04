@@ -245,7 +245,7 @@ class MeanReversionStrategy(BaseStrategy):
             return
 
         period = self._indicator_period()
-        days_needed = period + 60
+        days_needed = period
         try:
             close = self._client.get_close_prices(self._universe, days_needed)
         except Exception as e:

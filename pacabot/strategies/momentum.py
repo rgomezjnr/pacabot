@@ -50,7 +50,7 @@ class MomentumStrategy(BaseStrategy):
         Return tickers ranked by trailing return (best first).
         Returns None if data is insufficient.
         """
-        days_needed = self._params.lookback_period + 60  # buffer
+        days_needed = self._params.lookback_period
         try:
             close = self._client.get_close_prices(self._universe, days_needed)
         except Exception as e:

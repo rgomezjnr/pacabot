@@ -140,7 +140,7 @@ class PairsStrategy(BaseStrategy):
             return
 
         all_tickers = list({t for pair in self._params.pairs for t in pair})
-        days_needed = self._params.lookback_period + 60
+        days_needed = self._params.lookback_period
         try:
             close = self._client.get_close_prices(all_tickers, days_needed)
         except Exception as e:

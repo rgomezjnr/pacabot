@@ -124,12 +124,15 @@ class ExecutionManager:
 
         if self._risk._cfg.stop_loss is not None:
             stop_price = self._risk.stop_loss_price(price, "long" if long else "short")
-            if stop_price and self._client.wait_for_fill(str(entry_order.id)):
-                stop_side = OrderSide.SELL if long else OrderSide.BUY
-                try:
-                    self._client.submit_stop_order(symbol, shares, stop_side, stop_price)
-                except Exception as e:
-                    self._logger.error("Stop order failed for %s: %s", symbol, e)
+            if stop_price:
+                filled = self._client.wait_for_fill(str(entry_order.id))
+                self._pending_entries -= 1  # resolved: now in position_count() or failed
+                if filled:
+                    stop_side = OrderSide.SELL if long else OrderSide.BUY
+                    try:
+                        self._client.submit_stop_order(symbol, shares, stop_side, stop_price)
+                    except Exception as e:
+                        self._logger.error("Stop order failed for %s: %s", symbol, e)
 
         return True
 
@@ -208,11 +211,14 @@ class ExecutionManager:
                 (short_order, short_symbol, short_price, OrderSide.BUY, "short", short_shares),
             ]:
                 stop_price = self._risk.stop_loss_price(price, direction)
-                if stop_price and self._client.wait_for_fill(str(order.id)):
-                    try:
-                        self._client.submit_stop_order(sym, qty, stop_side, stop_price)
-                    except Exception as e:
-                        self._logger.error("Stop order failed for %s: %s", sym, e)
+                if stop_price:
+                    filled = self._client.wait_for_fill(str(order.id))
+                    self._pending_entries -= 1  # resolved: now in position_count() or failed
+                    if filled:
+                        try:
+                            self._client.submit_stop_order(sym, qty, stop_side, stop_price)
+                        except Exception as e:
+                            self._logger.error("Stop order failed for %s: %s", sym, e)
 
         return True
 
