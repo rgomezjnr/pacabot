@@ -267,7 +267,7 @@ The following have been confirmed; do not re-litigate unless the user raises the
 |---|---|---|---|
 | `lookback-period` | integer | Any positive integer (days) | README documents common values and tradeoffs |
 | `top-n` | integer | Any positive integer | Fixed count only — no percentage option. README documents retail scale tradeoffs |
-| `rebalance-frequency` | string | `"daily"`, `"weekly"`, `"monthly"` | How often to re-rank and rebalance assets. PDT or API rate limits may cause complications for "daily" option. |
+| `rebalance-frequency` | string | `"daily"`, `"weekly"`, `"monthly"` | How often to re-rank and rebalance assets. API rate limits may cause complications for "daily" option. |
 
 - Minimum holding period: not supported
 - In long/short mode (`long-only = false`): short count mirrors `top-n` exactly (e.g. `top-n = 10` → 10 longs + 10 shorts of bottom-ranked assets)
