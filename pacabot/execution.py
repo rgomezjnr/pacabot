@@ -170,7 +170,7 @@ class ExecutionManager:
         """Open a pairs trade: long leg + short leg scaled by hedge ratio."""
         if not self._risk.can_open_position():
             return False
-        if not self._risk.can_add_position(self._pending_entries):
+        if not self._risk.can_add_position(self._pending_entries + 1):
             self._logger.warning("Skipping pair — max positions reached")
             return False
 
@@ -188,7 +188,17 @@ class ExecutionManager:
         long_shares = self._risk.calculate_shares(long_price)
         if long_shares <= 0:
             return False
-        short_shares = max(int(long_shares * hedge_ratio), 1)
+
+        short_shares_raw = max(int(long_shares * hedge_ratio), 1)
+        max_val = self._risk.max_position_value()
+        if short_shares_raw * short_price > max_val:
+            short_shares = max(int(max_val / short_price), 1)
+            long_shares = max(int(short_shares / hedge_ratio), 1)
+        else:
+            short_shares = short_shares_raw
+
+        if long_shares <= 0 or short_shares <= 0:
+            return False
 
         order_type = self._strategy.order_type
 
