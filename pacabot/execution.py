@@ -51,9 +51,6 @@ class ExecutionManager:
             qty = abs(float(position.qty))
             avg_price = float(position.avg_entry_price)
             side = "long" if float(position.qty) > 0 else "short"
-            stop_price = self._risk.stop_loss_price(avg_price, side)
-            if stop_price is None:
-                continue
 
             existing = stops_by_symbol.get(symbol, [])
             if len(existing) > 1:
@@ -63,11 +60,8 @@ class ExecutionManager:
                 existing = existing[:1]
 
             if not existing:
-                stop_side = OrderSide.SELL if side == "long" else OrderSide.BUY
-                self._client.submit_stop_order(symbol, qty, stop_side, stop_price)
-                self._logger.info(
-                    "Reinstated missing stop order for %s @ $%.2f", symbol, stop_price
-                )
+                self._logger.info("Reinstating missing stop order for %s", symbol)
+                self._place_protective_stop(symbol, qty, side, avg_price)
 
     # ------------------------------------------------------------------
     # Entry
@@ -75,6 +69,52 @@ class ExecutionManager:
 
     def _order_side_entry(self, long: bool) -> OrderSide:
         return OrderSide.BUY if long else OrderSide.SELL
+
+    def _place_protective_stop(
+        self, symbol: str, qty: float, side: str, fill_price: float
+    ) -> None:
+        """Submit a GTC protective stop for a freshly opened position.
+
+        The stop is computed from the actual fill price (not the pre-trade
+        quote) and validated against the live market price before submission.
+        Alpaca rejects a sell stop that is not strictly below the current price
+        (and a buy stop not strictly above it); for fast-moving entries the
+        price can pass the intended stop level before the stop is placed. When
+        that happens the stop has effectively already been hit, so we exit at
+        market rather than leaving the position unprotected.
+        """
+        stop_price = self._risk.stop_loss_price(fill_price, side)
+        if stop_price is None:
+            return
+
+        try:
+            live = self._client.get_latest_quotes([symbol]).get(symbol)
+        except Exception as e:
+            self._logger.warning(
+                "Could not fetch live quote to validate stop for %s: %s", symbol, e
+            )
+            live = None
+
+        if live is not None and live > 0:
+            breached = (side == "long" and stop_price >= live) or (
+                side == "short" and stop_price <= live
+            )
+            if breached:
+                self._logger.warning(
+                    "Stop level $%.2f for %s already breached (market $%.2f) — "
+                    "exiting at market instead of leaving position unprotected",
+                    stop_price,
+                    symbol,
+                    live,
+                )
+                self.close_position(symbol, reason="stop level breached at entry")
+                return
+
+        stop_side = OrderSide.SELL if side == "long" else OrderSide.BUY
+        try:
+            self._client.submit_stop_order(symbol, qty, stop_side, stop_price)
+        except Exception as e:
+            self._logger.error("Stop order failed for %s: %s", symbol, e)
 
     def open_position(self, symbol: str, long: bool = True) -> bool:
         """
@@ -123,16 +163,13 @@ class ExecutionManager:
         self._pending_entries += 1
 
         if self._risk._cfg.stop_loss is not None:
-            stop_price = self._risk.stop_loss_price(price, "long" if long else "short")
-            if stop_price:
-                filled = self._client.wait_for_fill(str(entry_order.id))
-                self._pending_entries -= 1  # resolved: now in position_count() or failed
-                if filled:
-                    stop_side = OrderSide.SELL if long else OrderSide.BUY
-                    try:
-                        self._client.submit_stop_order(symbol, shares, stop_side, stop_price)
-                    except Exception as e:
-                        self._logger.error("Stop order failed for %s: %s", symbol, e)
+            filled = self._client.wait_for_fill(str(entry_order.id))
+            self._pending_entries -= 1  # resolved: now in position_count() or failed
+            if filled is not None:
+                fill_price = float(filled.filled_avg_price or price)
+                self._place_protective_stop(
+                    symbol, shares, "long" if long else "short", fill_price
+                )
 
         return True
 
@@ -216,19 +253,15 @@ class ExecutionManager:
         self._pending_entries += 2
 
         if self._risk._cfg.stop_loss is not None:
-            for order, sym, price, stop_side, direction, qty in [
-                (long_order, long_symbol, long_price, OrderSide.SELL, "long", long_shares),
-                (short_order, short_symbol, short_price, OrderSide.BUY, "short", short_shares),
+            for order, sym, price, direction, qty in [
+                (long_order, long_symbol, long_price, "long", long_shares),
+                (short_order, short_symbol, short_price, "short", short_shares),
             ]:
-                stop_price = self._risk.stop_loss_price(price, direction)
-                if stop_price:
-                    filled = self._client.wait_for_fill(str(order.id))
-                    self._pending_entries -= 1  # resolved: now in position_count() or failed
-                    if filled:
-                        try:
-                            self._client.submit_stop_order(sym, qty, stop_side, stop_price)
-                        except Exception as e:
-                            self._logger.error("Stop order failed for %s: %s", sym, e)
+                filled = self._client.wait_for_fill(str(order.id))
+                self._pending_entries -= 1  # resolved: now in position_count() or failed
+                if filled is not None:
+                    fill_price = float(filled.filled_avg_price or price)
+                    self._place_protective_stop(sym, qty, direction, fill_price)
 
         return True
 
