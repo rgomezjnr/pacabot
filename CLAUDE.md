@@ -339,6 +339,8 @@ Pairs are always pre-defined in config — no dynamic discovery. Hedge ratio use
 
 `exit-zscore` must be < `entry-zscore`. `stop-loss-zscore` must be > `entry-zscore`.
 
+Each ticker must appear in at most one pair — pacabot exits with an error at startup if any ticker is repeated. Overlapping tickers cause orphaned legs (a stop on one leg leaves the other stranded), asymmetric long/short exposure, and re-entry churn loops that burn margin. Use `tools/pairs-to-toml.py` to generate a deduplicated list from cointegration research output.
+
 ```toml
 [strategy]
 name = "pairs-trading"

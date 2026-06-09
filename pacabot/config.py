@@ -400,6 +400,20 @@ def _parse_pairs_parameters(params: dict) -> PairsParameters:
             _err(f"[strategy.parameters] 'pairs[{i}]' tickers must be non-empty strings")
         pairs.append([p[0].upper(), p[1].upper()])
 
+    # Detect overlapping pairs — each ticker may appear in at most one pair.
+    # Overlapping pairs cause orphaned legs, churn loops, and margin imbalances.
+    seen: dict[str, str] = {}  # ticker -> first pair that claimed it
+    for p in pairs:
+        for ticker in p:
+            pair_str = f"{p[0]}/{p[1]}"
+            if ticker in seen:
+                _err(
+                    f"[strategy.parameters] ticker '{ticker}' appears in more than one pair "
+                    f"('{seen[ticker]}' and '{pair_str}'). Each ticker must appear in at most "
+                    f"one pair. Remove the duplicate or use separate config files."
+                )
+            seen[ticker] = pair_str
+
     lp = _require_positive_int(params, "lookback-period", "strategy.parameters")
     entry = _require_positive_float(params, "entry-zscore", "strategy.parameters")
     exit_ = _require_positive_float(params, "exit-zscore", "strategy.parameters")

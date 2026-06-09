@@ -283,6 +283,8 @@ Pairs must be pre-defined in the config. Research cointegration before adding a 
 
 Both `stop-loss-zscore` and the per-position `stop-loss` in `[risk]` apply independently — whichever triggers first closes the position.
 
+> **Each ticker must appear in at most one pair.** If the same ticker appears in multiple pairs, pacabot will exit with an error at startup. Overlapping tickers cause orphaned legs when a stop triggers on one leg of a pair, margin imbalances from asymmetric long/short exposure, and re-entry churn loops. Use the `tools/pairs-to-toml.py` script to generate a deduplicated pairs list from cointegration output.
+
 #### Parameters
 
 | Parameter | Type | Valid values | Conventional | Description |
