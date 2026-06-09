@@ -213,6 +213,15 @@ class PairsStrategy(BaseStrategy):
             else:
                 # Entry: spread is far enough from mean
                 if abs(zscore) >= self._params.entry_zscore:
+                    # Don't enter if z-score is already at or above stop-loss threshold —
+                    # the position would be closed on the very next tick, creating a churn loop.
+                    if abs(zscore) >= self._params.stop_loss_zscore:
+                        self._logger.debug(
+                            "Pair %s/%s — z-score above stop threshold (z=%.2f), skipping entry",
+                            a, b, zscore,
+                        )
+                        continue
+
                     # Positive z: A is expensive vs B → short A, long B
                     # Negative z: A is cheap vs B → long A, short B
                     if zscore > 0:
