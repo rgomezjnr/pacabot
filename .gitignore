@@ -22,3 +22,8 @@ reports/
 .vscode/
 .idea/
 *.swp
+
+# Tools
+tools/are-they-coint.txt
+tools/coint-output.txt
+
