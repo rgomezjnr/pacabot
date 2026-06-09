@@ -164,8 +164,9 @@ class PairsStrategy(BaseStrategy):
                 self._logger.warning("Missing price data for pair %s/%s — skipping", a, b)
                 continue
 
-            price_a = close[a].dropna()
-            price_b = close[b].dropna()
+            common = close[[a, b]].dropna()
+            price_a = common[a]
+            price_b = common[b]
 
             hedge_ratio = _ols_hedge_ratio(price_a, price_b)
             zscore = _spread_zscore(price_a, price_b, hedge_ratio, self._params.lookback_period)
