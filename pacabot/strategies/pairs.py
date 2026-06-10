@@ -134,9 +134,12 @@ class PairsStrategy(BaseStrategy):
     def tick(self) -> None:
         if self._risk.is_halted:
             return
-        if not self._risk.check_margin():
-            return
         if not self._risk.check_daily_loss():
+            return
+
+        margin_ok = self._risk.check_margin()
+        if self._risk.is_halted:
+            # Critical threshold just triggered; positions already closed by check_margin
             return
 
         all_tickers = list({t for pair in self._params.pairs for t in pair})
@@ -212,6 +215,8 @@ class PairsStrategy(BaseStrategy):
 
             else:
                 # Entry: spread is far enough from mean
+                if not margin_ok:
+                    continue
                 if abs(zscore) >= self._params.entry_zscore:
                     # Don't enter if z-score is already at or above stop-loss threshold —
                     # the position would be closed on the very next tick, creating a churn loop.
