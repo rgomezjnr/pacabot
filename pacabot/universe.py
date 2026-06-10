@@ -75,32 +75,13 @@ def _fetch_dow30() -> list[str]:
     raise ValueError("Could not find Dow 30 ticker table on Wikipedia")
 
 
-def _fetch_ishares(etf: str) -> list[str]:
-    """Fetch holdings from iShares ETF CSV (Russell 1000 = IWB, Russell 2000 = IWM)."""
-    url = (
-        f"https://www.ishares.com/us/products/"
-        + ("239707/ISHARES-RUSSELL-1000-ETF" if etf == "IWB" else "239710/ISHARES-RUSSELL-2000-ETF")
-        + "/1467271812596.ajax?tab=holdings&fileType=csv"
-    )
-    resp = requests.get(url, headers=_HEADERS, timeout=30)
-    resp.raise_for_status()
-    lines = resp.text.splitlines()
-    # iShares CSV has header rows before the actual data; find the Ticker column
-    start = 0
-    for i, line in enumerate(lines):
-        if "Ticker" in line and "Name" in line:
-            start = i
-            break
-    df = pd.read_csv(StringIO("\n".join(lines[start:])), on_bad_lines="skip")
-    if "Ticker" not in df.columns:
-        raise ValueError(f"Could not parse iShares holdings CSV for {etf}")
-    tickers = df["Ticker"].dropna().tolist()
-    # Filter to valid ticker strings (exclude cash, futures lines)
-    return [
-        str(t)
-        for t in tickers
-        if isinstance(t, str) and t.isalpha() and len(t) <= 5
-    ]
+def _fetch_russell1000() -> list[str]:
+    tables = _wiki_tables("https://en.wikipedia.org/wiki/Russell_1000_Index")
+    for table in tables:
+        cols = [str(c).lower() for c in table.columns]
+        if "symbol" in cols:
+            return table["Symbol"].tolist()
+    raise ValueError("Could not find Russell 1000 ticker table on Wikipedia")
 
 
 _FETCHERS = {
@@ -108,8 +89,7 @@ _FETCHERS = {
     "sp100": _fetch_sp100,
     "nasdaq100": _fetch_nasdaq100,
     "dow30": _fetch_dow30,
-    "russell1000": lambda: _fetch_ishares("IWB"),
-    "russell2000": lambda: _fetch_ishares("IWM"),
+    "russell1000": _fetch_russell1000,
 }
 
 

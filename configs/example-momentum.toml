@@ -10,7 +10,7 @@ paper = true   # set to false for a live account
 
 [strategy]
 name = "cross-sectional-momentum"
-universe = "sp500"          # sp500 | sp100 | nasdaq100 | russell1000 | russell2000 | dow30 | custom
+universe = "sp500"          # sp500 | sp100 | nasdaq100 | russell1000 | dow30 | custom
 long-only = true            # false = also short the bottom-N ranked assets
 order-type = "market"       # market | limit
 

@@ -99,7 +99,6 @@ Options, forex, and crypto are explicitly out of scope.
 | `sp100` | S&P 100 |
 | `nasdaq100` | Nasdaq 100 |
 | `russell1000` | Russell 1000 |
-| `russell2000` | Russell 2000 |
 | `dow30` | Dow Jones Industrial Average |
 | `custom` | User-defined ticker list in config |
 

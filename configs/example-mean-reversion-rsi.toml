@@ -6,7 +6,7 @@ paper = true
 
 [strategy]
 name = "mean-reversion"
-universe = "sp100"          # sp500 | sp100 | nasdaq100 | russell1000 | russell2000 | dow30 | custom
+universe = "sp100"          # sp500 | sp100 | nasdaq100 | russell1000 | dow30 | custom
 long-only = true
 order-type = "market"       # market | limit
 

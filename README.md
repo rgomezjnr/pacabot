@@ -127,7 +127,6 @@ Copy an example config from `configs/` and adjust it for your needs.
 | `sp100` | S&P 100 | 100 | Mean reversion (most liquid large-caps) |
 | `nasdaq100` | Nasdaq 100 | 100 | Momentum (tech-heavy) |
 | `russell1000` | Russell 1000 | ~1,000 | Momentum (broad large+mid cap) |
-| `russell2000` | Russell 2000 | ~2,000 | Small-cap exposure (higher turnover) |
 | `dow30` | Dow Jones Industrial Average | 30 | Conservative, highly liquid |
 | `custom` | User-defined | Any | Pairs trading (always); custom stock lists |
 
