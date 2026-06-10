@@ -89,19 +89,28 @@ class PairsStrategy(BaseStrategy):
         open_pairs = self._open_pairs()
         if not open_pairs:
             return
+        configured_keys = {f"{a}/{b}" for a, b in self._params.pairs}
         positions = {p.symbol for p in self._client.get_positions()}
         for key, trade in list(open_pairs.items()):
+            a, b = key.split("/")
             long_sym = trade["long"]
             short_sym = trade["short"]
+
+            if key not in configured_keys:
+                self._logger.warning(
+                    "Pair %s — removed from config; closing open positions", key
+                )
+                self._execution.close_pair(long_sym, short_sym, reason="removed from config")
+                self._clear_pair(a, b)
+                continue
+
             if long_sym not in positions and short_sym not in positions:
-                a, b = key.split("/")
                 self._clear_pair(a, b)
                 self._logger.info(
                     "Pair %s — positions closed externally; cleared from state", key
                 )
             elif long_sym not in positions or short_sym not in positions:
                 missing = long_sym if long_sym not in positions else short_sym
-                a, b = key.split("/")
                 self._clear_pair(a, b)
                 self._logger.warning(
                     "Pair %s — orphaned leg detected (missing %s); cleared from state",
