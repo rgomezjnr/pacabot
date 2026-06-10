@@ -40,6 +40,13 @@ class MomentumStrategy(BaseStrategy):
             self._params.top_n,
             self._params.rebalance_frequency,
         )
+        if self.should_rebalance():
+            self._logger.info("Rebalance due — will run at next tick")
+        else:
+            self._logger.info(
+                "Already rebalanced today (%s) — monitoring positions",
+                self._last_rebalance(),
+            )
 
     # ------------------------------------------------------------------
     # Signal generation
@@ -129,3 +136,7 @@ class MomentumStrategy(BaseStrategy):
             return
         if self.should_rebalance():
             self._rebalance()
+        else:
+            self._logger.debug(
+                "Tick — no rebalance due (last: %s)", self._last_rebalance()
+            )
