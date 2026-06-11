@@ -111,11 +111,13 @@ class PairsStrategy(BaseStrategy):
                 )
             elif long_sym not in positions or short_sym not in positions:
                 missing = long_sym if long_sym not in positions else short_sym
-                self._clear_pair(a, b)
+                surviving = short_sym if long_sym not in positions else long_sym
                 self._logger.warning(
-                    "Pair %s — orphaned leg detected (missing %s); cleared from state",
-                    key, missing,
+                    "Pair %s — orphaned leg detected (missing %s); closing %s",
+                    key, missing, surviving,
                 )
+                self._execution.close_position(surviving, reason="orphaned leg")
+                self._clear_pair(a, b)
 
     # ------------------------------------------------------------------
     # Recalculation schedule
@@ -203,8 +205,8 @@ class PairsStrategy(BaseStrategy):
                     self._logger.warning(
                         "Pair %s — stop-loss z-score breached (z=%.2f). Closing.", key, zscore
                     )
-                    self._execution.close_pair(long_sym, short_sym, reason="z-score stop loss")
-                    self._clear_pair(a, b)
+                    if self._execution.close_pair(long_sym, short_sym, reason="z-score stop loss"):
+                        self._clear_pair(a, b)
                     continue
 
                 # Exit when spread reverts
@@ -212,8 +214,8 @@ class PairsStrategy(BaseStrategy):
                     self._logger.info(
                         "Pair %s — spread reverted (z=%.2f). Closing.", key, zscore
                     )
-                    self._execution.close_pair(long_sym, short_sym, reason="spread reversion")
-                    self._clear_pair(a, b)
+                    if self._execution.close_pair(long_sym, short_sym, reason="spread reversion"):
+                        self._clear_pair(a, b)
                     continue
 
                 # Recalculate hedge ratio on schedule

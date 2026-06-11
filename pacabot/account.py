@@ -157,12 +157,14 @@ class AlpacaClient:
         )
         return order
 
-    def close_position(self, symbol: str) -> None:
+    def close_position(self, symbol: str) -> bool:
         try:
             self.trading.close_position(symbol)
             self._logger.info("Position closed: %s", symbol)
+            return True
         except Exception as e:
             self._logger.error("Failed to close position %s: %s", symbol, e)
+            return False
 
     def close_all_positions(self) -> None:
         self.trading.close_all_positions(cancel_orders=True)

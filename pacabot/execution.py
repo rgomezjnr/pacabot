@@ -177,8 +177,8 @@ class ExecutionManager:
     # Exit
     # ------------------------------------------------------------------
 
-    def close_position(self, symbol: str, reason: str = "signal") -> None:
-        """Close an open position and cancel its GTC stop order."""
+    def close_position(self, symbol: str, reason: str = "signal") -> bool:
+        """Close an open position and cancel its GTC stop order. Returns True on success."""
         self._logger.info("Closing position: %s (reason: %s)", symbol, reason)
 
         # Cancel associated GTC stop orders first
@@ -191,7 +191,7 @@ class ExecutionManager:
             ):
                 self._client.cancel_order(str(order.id))
 
-        self._client.close_position(symbol)
+        return self._client.close_position(symbol)
 
     def close_all(self) -> None:
         """Emergency: cancel all orders and close all positions."""
@@ -265,6 +265,8 @@ class ExecutionManager:
 
         return True
 
-    def close_pair(self, long_symbol: str, short_symbol: str, reason: str = "signal") -> None:
-        self.close_position(long_symbol, reason)
-        self.close_position(short_symbol, reason)
+    def close_pair(self, long_symbol: str, short_symbol: str, reason: str = "signal") -> bool:
+        """Close both legs of a pairs trade. Returns True only if both legs closed successfully."""
+        long_ok = self.close_position(long_symbol, reason)
+        short_ok = self.close_position(short_symbol, reason)
+        return long_ok and short_ok
