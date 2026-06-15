@@ -73,13 +73,40 @@ class MomentumStrategy(BaseStrategy):
         ranked = returns.sort_values(ascending=False)
         return ranked.index.tolist()
 
-    def _target_longs(self, ranked: list[str]) -> set[str]:
-        return set(ranked[: self._params.top_n])
+    def _select_sized_targets(
+        self, candidates: list[str], n: int, exclude: set[str] | None = None
+    ) -> set[str]:
+        """Return the first n symbols from candidates that can be sized to at least 1 share.
 
-    def _target_shorts(self, ranked: list[str]) -> set[str]:
-        if self._cfg.strategy.long_only:
-            return set()
-        return set(ranked[-self._params.top_n :])
+        Fetches quotes for a pool of 2*n candidates and skips any whose price
+        exceeds the per-position dollar cap, falling through to the next-best
+        ranked symbol. This prevents the portfolio from being short by one
+        position when a high-priced stock tops the rankings.
+        """
+        pool = [s for s in candidates if s not in (exclude or set())][:n * 2]
+        try:
+            quotes = self._client.get_latest_quotes(pool)
+        except Exception as e:
+            self._logger.warning(
+                "Pre-fetch for target selection failed: %s — using strict top-%d", e, n
+            )
+            return set(pool[:n])
+
+        max_val = self._risk.max_position_value()
+        targets: set[str] = set()
+        for symbol in pool:
+            if len(targets) >= n:
+                break
+            price = quotes.get(symbol, 0)
+            if price > 0 and price > max_val:
+                self._logger.warning(
+                    "Excluding %s from target — price $%.2f exceeds max position value $%.2f; "
+                    "trying next ranked candidate",
+                    symbol, price, max_val,
+                )
+                continue
+            targets.add(symbol)
+        return targets
 
     # ------------------------------------------------------------------
     # Rebalance
@@ -91,8 +118,14 @@ class MomentumStrategy(BaseStrategy):
         if ranked is None:
             return
 
-        target_longs = self._target_longs(ranked)
-        target_shorts = self._target_shorts(ranked)
+        target_longs = self._select_sized_targets(ranked, self._params.top_n)
+        target_shorts = (
+            set()
+            if self._cfg.strategy.long_only
+            else self._select_sized_targets(
+                list(reversed(ranked)), self._params.top_n, exclude=target_longs
+            )
+        )
         target_all = target_longs | target_shorts
 
         positions = {p.symbol: p for p in self._client.get_positions()}

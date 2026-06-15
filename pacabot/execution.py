@@ -144,7 +144,9 @@ class ExecutionManager:
         shares = self._risk.calculate_shares(price)
         if shares <= 0:
             self._logger.warning(
-                "Skipping %s — calculated position size is 0 (price $%.2f)", symbol, price
+                "Skipping %s — position size is 0 at current price $%.2f "
+                "(price may have moved since target selection)",
+                symbol, price,
             )
             return False
 
