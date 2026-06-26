@@ -387,4 +387,5 @@ https://github.com/rgomezjnr/pacabot
 
 ## License
 
-[MIT](LICENSE) © 2026 Robert Gomez, Jr.
+[MIT](LICENSE.txt) © 2026 Robert Gomez, Jr.
+
