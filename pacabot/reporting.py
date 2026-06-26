@@ -58,9 +58,9 @@ def generate_eod_report(cfg: Config, client: AlpacaClient, risk: RiskManager) ->
 
     report_text = "\n".join(lines)
 
-    # Print to console
-    print(report_text)
-    logger.info("End-of-day report generated")
+    # Emit through the logger so the report reaches both the console and the
+    # log file (print() bypasses logging and is lost when stdout is detached).
+    logger.info("End-of-day report:\n%s", report_text)
 
     # Save to file
     _REPORTS_DIR.mkdir(exist_ok=True)
